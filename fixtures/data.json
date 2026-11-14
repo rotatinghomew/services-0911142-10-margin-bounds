@@ -1,0 +1,476 @@
+{
+  "releases": [
+    {
+      "table": "age_residence-persons",
+      "release": "first",
+      "unit": "persons",
+      "start": 0,
+      "stop": 30,
+      "universe": "eligible-households",
+      "counting": "distinct-household",
+      "dimensions": [
+        "age",
+        "residence"
+      ],
+      "tolerance": 0
+    },
+    {
+      "table": "age_residence-weighted",
+      "release": "first",
+      "unit": "weighted",
+      "start": 0,
+      "stop": 30,
+      "universe": "eligible-households",
+      "counting": "distinct-household",
+      "dimensions": [
+        "age",
+        "residence"
+      ],
+      "tolerance": 0.05
+    },
+    {
+      "table": "income_subsidy-persons",
+      "release": "first",
+      "unit": "persons",
+      "start": 0,
+      "stop": 30,
+      "universe": "eligible-households",
+      "counting": "distinct-household",
+      "dimensions": [
+        "income",
+        "subsidy"
+      ],
+      "tolerance": 0
+    },
+    {
+      "table": "income_subsidy-weighted",
+      "release": "first",
+      "unit": "weighted",
+      "start": 0,
+      "stop": 30,
+      "universe": "eligible-households",
+      "counting": "distinct-household",
+      "dimensions": [
+        "income",
+        "subsidy"
+      ],
+      "tolerance": 0.05
+    },
+    {
+      "table": "residence_subsidy-persons",
+      "release": "supplement",
+      "unit": "persons",
+      "start": 0,
+      "stop": 30,
+      "universe": "eligible-households",
+      "counting": "distinct-household",
+      "dimensions": [
+        "residence",
+        "subsidy"
+      ],
+      "tolerance": 0
+    },
+    {
+      "table": "residence_subsidy-weighted",
+      "release": "supplement",
+      "unit": "weighted",
+      "start": 0,
+      "stop": 30,
+      "universe": "eligible-households",
+      "counting": "distinct-household",
+      "dimensions": [
+        "residence",
+        "subsidy"
+      ],
+      "tolerance": 0.05
+    },
+    {
+      "table": "income_residence-persons",
+      "release": "supplement",
+      "unit": "persons",
+      "start": 0,
+      "stop": 30,
+      "universe": "eligible-households",
+      "counting": "distinct-household",
+      "dimensions": [
+        "income",
+        "residence"
+      ],
+      "tolerance": 0
+    },
+    {
+      "table": "income_residence-weighted",
+      "release": "supplement",
+      "unit": "weighted",
+      "start": 0,
+      "stop": 30,
+      "universe": "eligible-households",
+      "counting": "distinct-household",
+      "dimensions": [
+        "income",
+        "residence"
+      ],
+      "tolerance": 0.05
+    },
+    {
+      "table": "visit-count",
+      "release": "supplement",
+      "unit": "persons",
+      "start": 0,
+      "stop": 60,
+      "universe": "eligible-households",
+      "counting": "visits",
+      "dimensions": [
+        "subsidy"
+      ],
+      "tolerance": 0
+    }
+  ],
+  "margins": [
+    {
+      "cell": "age_residence-persons-young-urban",
+      "table": "age_residence-persons",
+      "coordinates": {
+        "age": "young",
+        "residence": "urban"
+      },
+      "value": 40
+    },
+    {
+      "cell": "age_residence-persons-young-rural",
+      "table": "age_residence-persons",
+      "coordinates": {
+        "age": "young",
+        "residence": "rural"
+      },
+      "value": 20
+    },
+    {
+      "cell": "age_residence-persons-older-urban",
+      "table": "age_residence-persons",
+      "coordinates": {
+        "age": "older",
+        "residence": "urban"
+      },
+      "value": 20
+    },
+    {
+      "cell": "age_residence-persons-older-rural",
+      "table": "age_residence-persons",
+      "coordinates": {
+        "age": "older",
+        "residence": "rural"
+      },
+      "value": 20
+    },
+    {
+      "cell": "age_residence-weighted-young-urban",
+      "table": "age_residence-weighted",
+      "coordinates": {
+        "age": "young",
+        "residence": "urban"
+      },
+      "value": 41.0
+    },
+    {
+      "cell": "age_residence-weighted-young-rural",
+      "table": "age_residence-weighted",
+      "coordinates": {
+        "age": "young",
+        "residence": "rural"
+      },
+      "value": 20.5
+    },
+    {
+      "cell": "age_residence-weighted-older-urban",
+      "table": "age_residence-weighted",
+      "coordinates": {
+        "age": "older",
+        "residence": "urban"
+      },
+      "value": 20.5
+    },
+    {
+      "cell": "age_residence-weighted-older-rural",
+      "table": "age_residence-weighted",
+      "coordinates": {
+        "age": "older",
+        "residence": "rural"
+      },
+      "value": 20.5
+    },
+    {
+      "cell": "income_subsidy-persons-low-yes",
+      "table": "income_subsidy-persons",
+      "coordinates": {
+        "income": "low",
+        "subsidy": "yes"
+      },
+      "value": 30
+    },
+    {
+      "cell": "income_subsidy-persons-low-no",
+      "table": "income_subsidy-persons",
+      "coordinates": {
+        "income": "low",
+        "subsidy": "no"
+      },
+      "value": 20
+    },
+    {
+      "cell": "income_subsidy-persons-other-yes",
+      "table": "income_subsidy-persons",
+      "coordinates": {
+        "income": "other",
+        "subsidy": "yes"
+      },
+      "value": 10
+    },
+    {
+      "cell": "income_subsidy-persons-other-no",
+      "table": "income_subsidy-persons",
+      "coordinates": {
+        "income": "other",
+        "subsidy": "no"
+      },
+      "value": 40
+    },
+    {
+      "cell": "income_subsidy-weighted-low-yes",
+      "table": "income_subsidy-weighted",
+      "coordinates": {
+        "income": "low",
+        "subsidy": "yes"
+      },
+      "value": 30.749999999999996
+    },
+    {
+      "cell": "income_subsidy-weighted-low-no",
+      "table": "income_subsidy-weighted",
+      "coordinates": {
+        "income": "low",
+        "subsidy": "no"
+      },
+      "value": 20.5
+    },
+    {
+      "cell": "income_subsidy-weighted-other-yes",
+      "table": "income_subsidy-weighted",
+      "coordinates": {
+        "income": "other",
+        "subsidy": "yes"
+      },
+      "value": 10.25
+    },
+    {
+      "cell": "income_subsidy-weighted-other-no",
+      "table": "income_subsidy-weighted",
+      "coordinates": {
+        "income": "other",
+        "subsidy": "no"
+      },
+      "value": 41.0
+    },
+    {
+      "cell": "residence_subsidy-persons-urban-yes",
+      "table": "residence_subsidy-persons",
+      "coordinates": {
+        "residence": "urban",
+        "subsidy": "yes"
+      },
+      "value": 20
+    },
+    {
+      "cell": "residence_subsidy-persons-urban-no",
+      "table": "residence_subsidy-persons",
+      "coordinates": {
+        "residence": "urban",
+        "subsidy": "no"
+      },
+      "value": 40
+    },
+    {
+      "cell": "residence_subsidy-persons-rural-yes",
+      "table": "residence_subsidy-persons",
+      "coordinates": {
+        "residence": "rural",
+        "subsidy": "yes"
+      },
+      "value": 20
+    },
+    {
+      "cell": "residence_subsidy-persons-rural-no",
+      "table": "residence_subsidy-persons",
+      "coordinates": {
+        "residence": "rural",
+        "subsidy": "no"
+      },
+      "value": 20
+    },
+    {
+      "cell": "residence_subsidy-weighted-urban-yes",
+      "table": "residence_subsidy-weighted",
+      "coordinates": {
+        "residence": "urban",
+        "subsidy": "yes"
+      },
+      "value": 20.5
+    },
+    {
+      "cell": "residence_subsidy-weighted-urban-no",
+      "table": "residence_subsidy-weighted",
+      "coordinates": {
+        "residence": "urban",
+        "subsidy": "no"
+      },
+      "value": 41.0
+    },
+    {
+      "cell": "residence_subsidy-weighted-rural-yes",
+      "table": "residence_subsidy-weighted",
+      "coordinates": {
+        "residence": "rural",
+        "subsidy": "yes"
+      },
+      "value": 20.5
+    },
+    {
+      "cell": "residence_subsidy-weighted-rural-no",
+      "table": "residence_subsidy-weighted",
+      "coordinates": {
+        "residence": "rural",
+        "subsidy": "no"
+      },
+      "value": 20.5
+    },
+    {
+      "cell": "income_residence-persons-low-urban",
+      "table": "income_residence-persons",
+      "coordinates": {
+        "income": "low",
+        "residence": "urban"
+      },
+      "value": 25
+    },
+    {
+      "cell": "income_residence-persons-low-rural",
+      "table": "income_residence-persons",
+      "coordinates": {
+        "income": "low",
+        "residence": "rural"
+      },
+      "value": 25
+    },
+    {
+      "cell": "income_residence-persons-other-urban",
+      "table": "income_residence-persons",
+      "coordinates": {
+        "income": "other",
+        "residence": "urban"
+      },
+      "value": 35
+    },
+    {
+      "cell": "income_residence-persons-other-rural",
+      "table": "income_residence-persons",
+      "coordinates": {
+        "income": "other",
+        "residence": "rural"
+      },
+      "value": 15
+    },
+    {
+      "cell": "income_residence-weighted-low-urban",
+      "table": "income_residence-weighted",
+      "coordinates": {
+        "income": "low",
+        "residence": "urban"
+      },
+      "value": 25.624999999999996
+    },
+    {
+      "cell": "income_residence-weighted-low-rural",
+      "table": "income_residence-weighted",
+      "coordinates": {
+        "income": "low",
+        "residence": "rural"
+      },
+      "value": 25.624999999999996
+    },
+    {
+      "cell": "income_residence-weighted-other-urban",
+      "table": "income_residence-weighted",
+      "coordinates": {
+        "income": "other",
+        "residence": "urban"
+      },
+      "value": 35.875
+    },
+    {
+      "cell": "income_residence-weighted-other-rural",
+      "table": "income_residence-weighted",
+      "coordinates": {
+        "income": "other",
+        "residence": "rural"
+      },
+      "value": 15.374999999999998
+    },
+    {
+      "cell": "visits-yes",
+      "table": "visit-count",
+      "coordinates": {
+        "subsidy": "yes"
+      },
+      "value": 80
+    },
+    {
+      "cell": "visits-no",
+      "table": "visit-count",
+      "coordinates": {
+        "subsidy": "no"
+      },
+      "value": 60
+    }
+  ],
+  "axes": [
+    {
+      "axis": "age",
+      "levels": [
+        "young",
+        "older"
+      ]
+    },
+    {
+      "axis": "residence",
+      "levels": [
+        "urban",
+        "rural"
+      ]
+    },
+    {
+      "axis": "income",
+      "levels": [
+        "low",
+        "other"
+      ]
+    },
+    {
+      "axis": "subsidy",
+      "levels": [
+        "yes",
+        "no"
+      ]
+    }
+  ],
+  "structural_zeros": [
+    {
+      "rule": "young-rural-other-yes",
+      "coordinates": {
+        "age": "young",
+        "residence": "rural",
+        "income": "other",
+        "subsidy": "yes"
+      }
+    }
+  ]
+}

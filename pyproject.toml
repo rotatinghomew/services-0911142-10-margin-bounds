@@ -1,0 +1,6 @@
+[project]
+name = "margin-bounds"
+version = "0.1.0"
+description = "托位汇总证据推理台"
+requires-python = ">=3.11"
+dependencies = []

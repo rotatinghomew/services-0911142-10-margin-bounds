@@ -1,0 +1,27 @@
+{
+  "name": "托位汇总证据推理台",
+  "focus": "分口径汇总约束与未披露单元",
+  "options": [
+    [
+      "release",
+      "材料轮次",
+      [
+        "first",
+        "supplement"
+      ]
+    ],
+    [
+      "unit",
+      "统计单位",
+      [
+        "persons",
+        "weighted"
+      ]
+    ]
+  ],
+  "selection": {
+    "release": "first",
+    "unit": "persons"
+  },
+  "purpose": "社会服务分析资料复核"
+}
