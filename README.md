@@ -4,10 +4,11 @@
 
 ## 使用环境
 
-使用 Python 3.11.14。页面为原生浏览器界面，数据处理通过本地 HTTP 服务完成，持久化使用应用内置数据库。基础浏览不依赖数值库；研究扩展所需的数值计算和建模库已按 `requirements.txt` 固定所有传递版本。依赖安装及镜像构建只在环境准备时做，启动和检查不访问网络。
+使用 Python 3.11，独立容器镜像锁定到 3.11.14。页面为原生浏览器界面，数据处理通过本地 HTTP 服务完成，持久化使用应用内置数据库。基础浏览不依赖数值库；研究扩展所需的数值计算和建模库已按 `requirements.txt` 固定所有传递版本。依赖安装及镜像构建只在环境准备时做，启动和检查不访问网络。
 
 ```bash
-python3 -m pip install -r requirements.txt
+python3 -m pip install -r requirements.txt -r requirements-build.txt -r requirements-test.txt
+python3 -m playwright install --with-deps chromium
 python3 -m margin_bounds --host 127.0.0.1 --port 8080
 ```
 
@@ -22,6 +23,8 @@ docker run --rm -p 8080:8080 -v margin_bounds-state:/app/.state margin_bounds:lo
 
 ```bash
 python3 -m unittest discover -s tests -v
+python3 -m build --wheel --no-isolation
+python3 tests/browser_smoke.py
 ```
 
 检查包含真实领域字段、非法导入、边界数据保留、HTTP交互、版本指纹及重启后存档。现有检查只验证已实现的资料浏览行为，不把将来要开发的推断功能冒充现有能力。新增能力需要补充针对统计识别、支持范围和页面一致性的回归。运行检查使用临时状态，不改动资料。
