@@ -38,6 +38,9 @@ class Handler(BaseHTTPRequestHandler):
             if parsed.path == "/api/data":
                 revision = parse_qs(parsed.query).get("revision", [self.workbench.default_revision])[0]
                 return self.send(200, self.workbench.store.dataset(revision))
+            if parsed.path == "/api/axes":
+                revision = parse_qs(parsed.query).get("revision", [self.workbench.default_revision])[0]
+                return self.send(200, self.workbench.axes(revision))
             if parsed.path == "/api/notebooks":
                 return self.send(200, self.workbench.store.notebooks())
             if parsed.path.startswith("/api/notebooks/"):
@@ -61,9 +64,17 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError("请求正文应为对象")
             if self.path == "/api/explore":
                 return self.send(200, self.workbench.inspect(body))
+            if self.path == "/api/analyze":
+                return self.send(200, self.workbench.analyze(body))
+            if self.path == "/api/compare":
+                return self.send(200, self.workbench.compare(body))
             if self.path == "/api/datasets":
                 return self.send(201, self.workbench.upload(body))
             if self.path == "/api/notebooks":
+                if body.get("kind") == "comparison":
+                    return self.send(201, self.workbench.save_comparison(body))
+                if body.get("kind") == "identification":
+                    return self.send(201, self.workbench.save_analysis(body))
                 return self.send(201, self.workbench.save(body))
             self.send(404, {"error": "路径不存在"})
         except LookupError as error:

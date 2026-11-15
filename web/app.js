@@ -1,4 +1,4 @@
-const state = {context: null, current: null};
+const state = {context: null, current: null, axes: null, analysis: null, queries: []};
 const element = identifier => document.getElementById(identifier);
 
 async function request(path, body) {
@@ -22,6 +22,7 @@ async function guarded(action) {
 function selected() {
   const selection = {};
   for (const control of state.context.product.options) selection[control[0]] = element('select-' + control[0]).value;
+  selection.universe = element('universe').value;
   return {revision: element('revision').value, selection};
 }
 
@@ -54,10 +55,94 @@ function renderControls() {
   }
 }
 
+function fillRevisionOptions(select, value) {
+  select.replaceChildren();
+  for (const dataset of state.context.datasets) {
+    const option = document.createElement('option');
+    option.value = dataset.revision;
+    option.textContent = dataset.label + ' · ' + dataset.revision.slice(0, 9);
+    select.append(option);
+  }
+  select.value = value || state.context.default_revision;
+  if (!select.value) select.value = state.context.default_revision;
+}
+
+async function refreshAxes() {
+  const revision = element('revision').value || state.context.default_revision;
+  try {
+    state.axes = await request('/api/axes?revision=' + encodeURIComponent(revision));
+  } catch (error) {
+    state.axes = {axes: [], releases: []};
+    throw error;
+  }
+  const universes = [...new Set(state.axes.releases.map(release => release.universe))];
+  element('universe').replaceChildren();
+  for (const value of universes) {
+    const option = document.createElement('option'); option.value = value; option.textContent = value;
+    element('universe').append(option);
+  }
+  element('universe').value = universes.includes('eligible-households')
+    ? 'eligible-households' : universes[0];
+  const population = element('population');
+  const outcome = element('outcome');
+  const keepPopulation = new Set([...population.querySelectorAll('input:checked')].map(box => box.value));
+  const keepOutcome = new Set([...outcome.querySelectorAll('input:checked')].map(box => box.value));
+  population.replaceChildren(); outcome.replaceChildren();
+  for (const axis of state.axes.axes) {
+    for (const level of axis.levels) {
+      const wrapping = document.createElement('label');
+      wrapping.className = 'chip';
+      const box = document.createElement('input'); box.type = 'checkbox';
+      box.value = axis.axis + '|' + level;
+      box.name = axis.axis;
+      const text = document.createElement('span');
+      text.textContent = axis.axis + '=' + level;
+      if (keepPopulation.has(box.value)) box.checked = true;
+      box.onchange = () => enforceAxis(population, outcome, axis.axis);
+      wrapping.append(box, text);
+      population.append(wrapping);
+      const other = document.createElement('label');
+      other.className = 'chip';
+      const second = document.createElement('input'); second.type = 'checkbox';
+      second.value = axis.axis + '|' + level;
+      second.name = axis.axis;
+      const label = document.createElement('span');
+      label.textContent = axis.axis + '=' + level;
+      if (keepOutcome.has(second.value)) second.checked = true;
+      second.onchange = () => enforceAxis(outcome, population, axis.axis);
+      other.append(second, label);
+      outcome.append(other);
+    }
+  }
+}
+
+function enforceAxis(container, other, axis) {
+  const boxes = [...container.querySelectorAll('input:checked')].filter(box => box.name === axis);
+  for (const box of boxes.slice(1)) box.checked = false;
+  if (boxes.length) {
+    for (const box of other.querySelectorAll('input')) if (box.name === axis) box.checked = false;
+  }
+}
+
+function queryTerms(container) {
+  return [...container.querySelectorAll('input:checked')].map(box => {
+    const [axis, level] = box.value.split('|');
+    return {axis, level};
+  });
+}
+
 function displayValue(value) {
   if (value === null || value === undefined) return '未观测';
   if (typeof value === 'number') return Number.isInteger(value) ? String(value) : value.toFixed(4);
   return typeof value === 'object' ? JSON.stringify(value) : String(value);
+}
+
+function roundedInterval(value) {
+  if (!value) return '—';
+  const low = value.low, high = value.high;
+  if (low === null || high === null) return '—';
+  const format = number => Number.isInteger(number) ? String(number) : number.toFixed(2);
+  return format(low) + ' – ' + format(high);
 }
 
 function drawChart(series) {
@@ -121,28 +206,240 @@ function render(result, heading) {
   message((heading || '已更新描述') + ' · 数据 ' + result.revision.slice(0, 12));
 }
 
+function termsText(terms) {
+  return terms.length ? terms.map(term => term.axis + '=' + term.level).join('，') : '全部户';
+}
+
+function describeStatus(status) {
+  return {
+    unique: '唯一可确定：现有材料下该指标只能取一个值',
+    possible: '仍有多种可能：现有材料只支持一个范围',
+    conflict: '材料互相冲突：联立约束无可行解，需先核对材料',
+    undefined: '未定义：分母可能为零，比例不能确定',
+    unsupported: '现有材料不足以回答：缺少兼容的表或维度',
+  }[status] || status;
+}
+
+function percentInterval(value) {
+  if (!value || !value.defined || value.low === null || value.high === null) return '—';
+  return (value.low * 100).toFixed(1) + '% – ' + (value.high * 100).toFixed(1) + '%';
+}
+
+function renderAnalysis(analysis, heading) {
+  element('answer').replaceChildren();
+  const card = document.createElement('article');
+  card.className = 'answer ' + analysis.status;
+  const title = document.createElement('h3'); title.textContent = describeStatus(analysis.status);
+  const line = document.createElement('p');
+  line.textContent = '问题：分母 ' + termsText(analysis.query.population) + '；结果 ' +
+    termsText(analysis.query.outcome) + (analysis.period ? '（' + analysis.period + '）' : '');
+  const numbers = document.createElement('div'); numbers.className = 'numbers';
+  for (const [label, value] of [
+    ['分子（户）', roundedInterval(analysis.numerator)],
+    ['分母（户）', roundedInterval(analysis.denominator)],
+    ['占比', percentInterval(analysis.share)],
+  ]) {
+    const item = document.createElement('div');
+    const name = document.createElement('span'); name.textContent = label;
+    const amount = document.createElement('strong'); amount.textContent = value;
+    item.append(name, amount); numbers.append(item);
+  }
+  card.append(title, line, numbers);
+  const notes = document.createElement('div'); notes.id = 'analysis-notes';
+  for (const note of analysis.notes) {
+    const paragraph = document.createElement('p'); paragraph.textContent = note; notes.append(paragraph);
+  }
+  card.append(notes);
+  element('answer').append(card);
+
+  const evidence = element('evidence'); evidence.replaceChildren();
+  const usedTitle = document.createElement('h3'); usedTitle.textContent = '回答依赖的表';
+  evidence.append(usedTitle);
+  if (analysis.evidence.used.length) {
+    const list = document.createElement('ul');
+    for (const table of analysis.evidence.used) {
+      const item = document.createElement('li');
+      item.textContent = table.table + ' · ' + table.release + ' · ' + table.unit + ' · ' +
+        table.period + ' · ' + table.role;
+      list.append(item);
+    }
+    evidence.append(list);
+  } else {
+    const none = document.createElement('p'); none.textContent = '本次没有可用的表。';
+    evidence.append(none);
+  }
+  if (analysis.evidence.excluded.length) {
+    const excludedTitle = document.createElement('h3'); excludedTitle.textContent = '未并入的表及原因';
+    const list = document.createElement('ul');
+    for (const excluded of analysis.evidence.excluded) {
+      const item = document.createElement('li');
+      item.textContent = excluded.table + '：' + excluded.reasons.join('；');
+      list.append(item);
+    }
+    evidence.append(excludedTitle, list);
+  }
+  if (analysis.evidence.rules && analysis.evidence.rules.length) {
+    const ruleTitle = document.createElement('h3'); ruleTitle.textContent = '结构约定';
+    const list = document.createElement('ul');
+    for (const rule of analysis.evidence.rules) {
+      const item = document.createElement('li');
+      item.textContent = rule.rule + '（' + rule.zero + '）：' + rule.effect;
+      list.append(item);
+    }
+    evidence.append(ruleTitle, list);
+  }
+  if (analysis.evidence.confidence) {
+    const paragraph = document.createElement('p');
+    paragraph.textContent = '计算口径：' + analysis.evidence.confidence +
+      '；共用 ' + analysis.evidence.cells + ' 个单元格。';
+    evidence.append(paragraph);
+  } else if (analysis.evidence.period) {
+    const paragraph = document.createElement('p');
+    paragraph.textContent = '期间口径：' + analysis.evidence.period +
+      '；不同期间口径的表未并入同一可行域。';
+    evidence.append(paragraph);
+  }
+
+  const conflicts = element('conflicts'); conflicts.replaceChildren();
+  if (analysis.conflicts.length) {
+    const title = document.createElement('h3'); title.textContent = '可核对的冲突组合';
+    conflicts.append(title);
+    for (const conflict of analysis.conflicts) {
+      const box = document.createElement('article'); box.className = 'conflict';
+      const name = document.createElement('strong');
+      name.textContent = conflict.tables.join(' × ') + ' · ' + conflict.kind;
+      box.append(name);
+      for (const detail of conflict.details) {
+        const paragraph = document.createElement('p');
+        paragraph.textContent = detail.message + (detail.sources
+          ? '（' + detail.sources.map(source => source.table + '：' +
+              displayValue(source.implied_low) + '–' + displayValue(source.implied_high)).join('；') + '）'
+          : '');
+        box.append(paragraph);
+      }
+      conflicts.append(box);
+    }
+  }
+
+  const alternatives = element('alternatives'); alternatives.replaceChildren();
+  if (analysis.alternatives.length) {
+    const title = document.createElement('h3'); title.textContent = '逐表贡献（去掉一张表后的分子范围）';
+    const list = document.createElement('ul');
+    for (const row of analysis.alternatives) {
+      const item = document.createElement('li');
+      item.textContent = row.removed + '：' + row.effect + '，分子 ' + roundedInterval(row.numerator);
+      list.append(item);
+    }
+    alternatives.append(title, list);
+  }
+  element('details').textContent = JSON.stringify(analysis, null, 2);
+  message((heading || '已分析交叉问题') + ' · ' + describeStatus(analysis.status));
+}
+
+function renderComparison(comparison, heading) {
+  const columns = ['问题', '补表前占比', '补表后占比', '变化'];
+  const header = document.createElement('tr');
+  for (const field of columns) { const cell = document.createElement('th'); cell.textContent = field; header.append(cell); }
+  element('compare-columns').replaceChildren(header);
+  element('compare-rows').replaceChildren();
+  for (const row of comparison.rows) {
+    const line = document.createElement('tr');
+    const values = [
+      row.label || termsText(row.query.population) + ' → ' + termsText(row.query.outcome),
+      percentInterval(row.baseline.share),
+      percentInterval(row.current.share),
+      row.change,
+    ];
+    for (const value of values) {
+      const cell = document.createElement('td'); cell.textContent = value; line.append(cell);
+    }
+    element('compare-rows').append(line);
+  }
+  element('details').textContent = JSON.stringify(comparison, null, 2);
+  message((heading || '已比较补表前后') + ' · ' + comparison.rows.length + ' 个问题');
+}
+
 async function refresh() {
   state.context = await request('/api/context');
   renderControls();
+  await refreshAxes();
+  fillRevisionOptions(element('baseline-revision'), state.context.datasets[1]
+    ? state.context.datasets[1].revision : state.context.default_revision);
   element('archive').replaceChildren();
   for (const notebook of state.context.notebooks) {
     const button = document.createElement('button'); button.textContent = notebook.title + ' #' + notebook.id;
     button.onclick = () => guarded(async () => {
       const saved = await request('/api/notebooks/' + notebook.id);
-      element('revision').value = saved.revision;
-      for (const [key, value] of Object.entries(saved.selection)) {
-        const control = element('select-' + key); if (control) control.value = value;
-      }
-      render(saved.result, '已读取保存的描述，不随新数据变化');
+      await openNotebook(saved);
     });
     element('archive').append(button);
   }
+  await refreshAxes();
 }
 
-element('inspect').onclick = () => guarded(async () => render(await request('/api/explore', selected())));
+async function openNotebook(saved) {
+  element('revision').value = saved.revision;
+  await refreshAxes();
+  for (const [key, value] of Object.entries(saved.selection)) {
+    const control = element('select-' + key); if (control) control.value = value;
+    if (key === 'universe') element('universe').value = value;
+  }
+  const payload = saved.result;
+  if (payload.kind === 'identification') {
+    renderAnalysis(payload.analysis, '已读取保存的证据记录 #' + saved.id);
+  } else if (payload.kind === 'comparison') {
+    renderComparison(payload.comparison, '已读取保存的比较记录 #' + saved.id);
+  } else {
+    render(saved.result, '已读取保存的描述，不随新数据变化');
+  }
+}
+
+element('inspect').onclick = () => guarded(async () => {
+  await refreshAxes();
+  render(await request('/api/explore', selected()));
+});
+element('analyze').onclick = () => guarded(async () => {
+  const query = {population: queryTerms(element('population')), outcome: queryTerms(element('outcome'))};
+  if (!query.outcome.length) throw new Error('结果条件至少选择一项');
+  const response = await request('/api/analyze', {...selected(), query});
+  state.analysis = response.analysis;
+  state.queries = [{label: element('query-label').value, ...query}];
+  renderAnalysis(response.analysis, '已分析交叉问题');
+});
+element('compare').onclick = () => guarded(async () => {
+  if (!state.queries.length) throw new Error('请先分析一个交叉问题');
+  const current = {revision: element('revision').value, selection: selected().selection};
+  const baselineSelection = {...current.selection};
+  if (current.selection.release === 'supplement') baselineSelection.release = 'first';
+  const baseline = {revision: element('baseline-revision').value, selection: baselineSelection};
+  if (baseline.revision === current.revision) throw new Error('请选择与当前不同的补表前材料');
+  const response = await request('/api/compare', {queries: state.queries, baseline, current});
+  renderComparison(response.comparison, '已比较补表前后');
+});
+element('revision').onchange = () => guarded(async () => {
+  await refreshAxes();
+  render(await request('/api/explore', selected()), '已切换材料版本');
+});
 element('save').onclick = () => guarded(async () => {
   const saved = await request('/api/notebooks', {...selected(), title: element('title').value});
   await refresh(); render(saved.result, '已保存记录 #' + saved.id);
+});
+element('save-analysis').onclick = () => guarded(async () => {
+  if (!state.analysis) throw new Error('请先分析一个交叉问题');
+  const query = state.analysis.query;
+  const saved = await request('/api/notebooks', {...selected(), title: element('title').value,
+    kind: 'identification', query});
+  await refresh(); renderAnalysis(saved.result.analysis, '已保存证据记录 #' + saved.id);
+});
+element('save-comparison').onclick = () => guarded(async () => {
+  if (!state.queries.length) throw new Error('请先分析一个交叉问题');
+  const current = {revision: element('revision').value, selection: selected().selection};
+  const baselineSelection = {...current.selection};
+  if (current.selection.release === 'supplement') baselineSelection.release = 'first';
+  const baseline = {revision: element('baseline-revision').value, selection: baselineSelection};
+  const saved = await request('/api/notebooks', {...selected(), title: element('title').value,
+    kind: 'comparison', queries: state.queries, baseline, current});
+  await refresh(); renderComparison(saved.result.comparison, '已保存比较记录 #' + saved.id);
 });
 element('raw').onclick = () => guarded(async () => {
   const revision = state.current ? state.current.revision : element('revision').value;
@@ -163,4 +460,13 @@ element('export').onclick = () => guarded(async () => {
   link.href = url; link.download = 'analysis-' + state.current.revision.slice(0, 12) + '.json'; link.click();
   URL.revokeObjectURL(url);
 });
-guarded(async () => { await refresh(); render(await request('/api/explore', selected())); });
+guarded(async () => {
+  await refresh();
+  element('population').querySelectorAll('input').forEach(box => {
+    if (box.value === 'income|low') box.checked = true;
+  });
+  element('outcome').querySelectorAll('input').forEach(box => {
+    if (box.value === 'subsidy|yes') box.checked = true;
+  });
+  render(await request('/api/explore', selected()));
+});

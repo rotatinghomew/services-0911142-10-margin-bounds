@@ -3,11 +3,31 @@
 <title>托位汇总证据推理台</title><link rel="stylesheet" href="/style.css"></head>
 <body><header><span>教研数据 · 复核工作区</span><h1>托位汇总证据推理台</h1><p>分口径汇总约束与未披露单元</p></header>
 <main><aside><h2>数据与范围</h2><label>数据版本<select id="revision"></select></label><div id="controls"></div>
+<label>查询总体<select id="universe"></select></label>
 <button id="inspect">查看所选范围</button><label>导入完整数据<input id="upload" type="file" accept=".json,application/json"></label>
-<button id="raw">查看原始记录</button><h2>分析记录</h2><label>记录名称<input id="title" value="本次复核"></label>
+<button id="raw">查看原始记录</button>
+<h2>分析记录</h2><label>记录名称<input id="title" value="本次复核"></label>
 <button id="save">保存当前描述</button><div id="archive"></div></aside>
 <section><div id="status" role="status">正在读取本地数据…</div><div id="summary"></div>
 <h2>分口径汇总约束与未披露单元</h2><div id="notes"></div><canvas id="chart" width="960" height="300" aria-label="所选范围描述图"></canvas>
 <div class="table-wrap"><table><thead id="columns"></thead><tbody id="rows"></tbody></table></div>
 <h2 id="detail-heading">记录与依据</h2><pre id="details">点击记录行可查看详细字段。</pre><button id="export">导出当前记录</button>
+
+<h2>交叉人群证据范围</h2>
+<p class="hint">提出一个交叉人群问题，查看现有材料能支持的<b>最小与最大</b>。不假定各维度独立，不把边际相乘；区间内的单点不是真实人头。</p>
+<label>分母人群（可多选，留空为全部户）<div id="population" class="chips"></div></label>
+<label>结果条件（至少一项）<div id="outcome" class="chips"></div></label>
+<label>查询名称<input id="query-label" value="农村低收入家庭获得补贴的比例"></label>
+<button id="analyze">分析这个交叉问题</button>
+<button id="save-analysis">保存证据记录</button>
+<div id="answer"></div>
+<div id="evidence"></div>
+<div id="conflicts"></div>
+<div id="alternatives"></div>
+<h2>补表后比较</h2>
+<p class="hint">把当前材料版本当作“补表后”，把另一版本当作“补表前”，比较哪些问题的范围缩小。旧记录仍按保存时的材料打开。</p>
+<label>补表前材料<select id="baseline-revision"></select></label>
+<button id="compare">比较当前问题</button>
+<button id="save-comparison">保存比较记录</button>
+<div class="table-wrap"><table><thead id="compare-columns"></thead><tbody id="compare-rows"></tbody></table></div>
 </section></main><footer>仅使用本地虚构记录；描述统计不替代研究设计与业务复核。</footer><script src="/app.js"></script></body></html>
